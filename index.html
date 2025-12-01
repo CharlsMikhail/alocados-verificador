@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alocados - Validador de Safe Zones</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212; /* Negro Alocados */
+            color: white;
+        }
+        
+        .brand-yellow {
+            color: #FFC107;
+        }
+        
+        .bg-brand-yellow {
+            background-color: #FFC107;
+        }
+
+        /* Simulación de teléfono */
+        .phone-frame {
+            aspect-ratio: 9/16;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.2);
+            border: 8px solid #333;
+            background-color: #222;
+        }
+
+        /* Capa de Zonas Seguras */
+        .safe-zone-overlay {
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .safe-zone-active .safe-zone-overlay {
+            opacity: 1;
+        }
+
+        /* Áreas de peligro (Roja semitransparente) */
+        .danger-zone {
+            position: absolute;
+            background-color: rgba(255, 0, 0, 0.35);
+            border: 1px dashed red;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        
+        /* Ocultar scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFC107; 
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="w-full bg-neutral-900 border-b border-neutral-800 p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <!-- Logo Simulado -->
+                <div class="w-10 h-10 bg-brand-yellow rounded-full flex items-center justify-center text-black font-bold text-xl">A</div>
+                <h1 class="text-xl font-bold tracking-wide">ALOCADOS <span class="text-xs font-normal text-gray-400 block sm:inline">Creator Studio</span></h1>
+            </div>
+            <a href="#" class="text-sm text-gray-400 hover:text-yellow-400 transition">Ayuda</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+        
+        <!-- Panel de Control (Izquierda en PC, Arriba en Móvil) -->
+        <div class="space-y-6 order-2 lg:order-1">
+            
+            <div class="bg-neutral-800 p-6 rounded-2xl border border-neutral-700 shadow-lg">
+                <h2 class="text-2xl font-bold mb-2 brand-yellow">1. Sube tu Contenido</h2>
+                <p class="text-gray-400 text-sm mb-4">Sube la foto o captura de tu video para verificar si el texto es legible.</p>
+                
+                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-neutral-600 border-dashed rounded-lg cursor-pointer bg-neutral-700 hover:bg-neutral-600 transition">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i data-lucide="upload-cloud" class="w-8 h-8 mb-2 text-gray-300"></i>
+                        <p class="text-sm text-gray-300"><span class="font-semibold">Clic para subir imagen</span></p>
+                        <p class="text-xs text-gray-500">PNG, JPG (Vertical recomendado)</p>
+                    </div>
+                    <input id="fileInput" type="file" class="hidden" accept="image/*" />
+                </label>
+            </div>
+
+            <div class="bg-neutral-800 p-6 rounded-2xl border border-neutral-700 shadow-lg">
+                <h2 class="text-2xl font-bold mb-2 brand-yellow">2. Controles de Visibilidad</h2>
+                <p class="text-gray-400 text-sm mb-6">Activa las capas para ver qué elementos tapan tu diseño.</p>
+
+                <!-- Toggle UI Real -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-900 rounded-lg text-blue-200">
+                            <i data-lucide="smartphone"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Interfaz de TikTok/Reels</h3>
+                            <p class="text-xs text-gray-400">Muestra botones, descripción y audio</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleUI" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+
+                <!-- Toggle Zonas Seguras -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-red-900 rounded-lg text-red-200">
+                            <i data-lucide="shield-alert"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Ver Zonas Peligrosas</h3>
+                            <p class="text-xs text-gray-400">Marca en ROJO donde NO poner texto</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleSafeZone" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Tips IHC -->
+            <div class="bg-yellow-900/20 border border-yellow-700/50 p-4 rounded-xl flex gap-3">
+                <i data-lucide="lightbulb" class="text-yellow-500 shrink-0"></i>
+                <div class="text-sm text-yellow-100">
+                    <strong>Tip Pro:</strong> Los textos importantes (Precio, Nombre del plato) deben ir siempre en el centro o tercio superior para asegurar lectura en 3 segundos.
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Vista Previa (Derecha en PC, Abajo en Móvil) -->
+        <div class="flex justify-center order-1 lg:order-2 sticky top-24">
+            
+            <!-- Simulador de Teléfono -->
+            <div id="phoneFrame" class="phone-frame w-[320px] sm:w-[360px] shadow-2xl bg-gray-800 relative group">
+                
+                <!-- Imagen del Usuario (Background) -->
+                <div id="userImage" class="absolute inset-0 bg-cover bg-center transition-opacity" style="background-image: url('https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?q=80&w=2071&auto=format&fit=crop');">
+                    <!-- Placeholder si no hay imagen -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-neutral-800 text-neutral-500 z-0" id="placeholderMsg">
+                        <i data-lucide="image" class="w-12 h-12 mb-2 opacity-50"></i>
+                        <span class="text-xs uppercase tracking-widest">Vista Previa</span>
+                    </div>
+                </div>
+
+                <!-- Capa UI (Interfaz de TikTok) -->
+                <div id="uiLayer" class="absolute inset-0 z-10 flex flex-col justify-between p-4 transition-opacity duration-300">
+                    
+                    <!-- Top Bar -->
+                    <div class="flex justify-center pt-2 opacity-80">
+                        <div class="text-shadow font-bold text-sm flex gap-4 text-white">
+                            <span class="text-gray-400">Siguiendo</span>
+                            <span class="border-b-2 border-white pb-1">Para ti</span>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar (Actions) -->
+                    <div class="absolute right-2 bottom-24 flex flex-col items-center gap-5">
+                        <!-- Profile -->
+                        <div class="w-10 h-10 rounded-full border border-white bg-black overflow-hidden relative mb-2">
+                            <div class="w-full h-full bg-yellow-500 flex items-center justify-center text-black font-bold text-xs">A</div>
+                            <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px] text-white">+</div>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex flex-col items-center gap-1">
+                            <i data-lucide="heart" class="w-8 h-8 text-white drop-shadow-md fill-white/20"></i>
+                            <span class="text-xs font-bold drop-shadow-md">1.2k</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-1">
+                            <i data-lucide="message-circle" class="w-8 h-8 text-white drop-shadow-md fill-white/20"></i>
+                            <span class="text-xs font-bold drop-shadow-md">45</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-1">
+                            <i data-lucide="bookmark" class="w-8 h-8 text-white drop-shadow-md fill-white/20"></i>
+                            <span class="text-xs font-bold drop-shadow-md">120</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-1">
+                            <i data-lucide="share-2" class="w-8 h-8 text-white drop-shadow-md fill-white/20"></i>
+                            <span class="text-xs font-bold drop-shadow-md">Share</span>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Content -->
+                    <div class="mt-auto pr-16 pb-2 text-white/90 drop-shadow-lg">
+                        <h4 class="font-bold text-sm mb-1">@AlocadosRestobar</h4>
+                        <p class="text-sm leading-tight mb-2">¡La mejor salchipapa de Paucarpata! 🍟🔥 Confirma si vienes hoy 👇 <span class="font-bold">#Alocados #Arequipa</span></p>
+                        <div class="flex items-center gap-2 text-xs font-medium">
+                            <i data-lucide="music" class="w-3 h-3"></i>
+                            <div class="animate-pulse">Sonido Original - Alocados...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capa Safe Zone (Zonas Prohibidas) -->
+                <div id="safeZoneLayer" class="safe-zone-overlay absolute inset-0 z-20">
+                    <!-- Zona Derecha (Botones) -->
+                    <div class="danger-zone right-0 top-[20%] bottom-[20%] w-[60px] rounded-l-lg">
+                        <span class="-rotate-90 whitespace-nowrap">Botones</span>
+                    </div>
+                    
+                    <!-- Zona Inferior (Descripción) -->
+                    <div class="danger-zone bottom-0 left-0 right-0 h-[120px] rounded-t-lg">
+                        <span>Descripción y Audio</span>
+                    </div>
+
+                    <!-- Zona Superior (Tabs) -->
+                    <div class="danger-zone top-0 left-0 right-0 h-[60px] rounded-b-lg">
+                        <span>Navegación</span>
+                    </div>
+
+                    <!-- Marco de Seguridad (Area OK) -->
+                    <div class="absolute inset-x-[10px] inset-y-[70px] border-2 border-green-400 opacity-50 rounded-lg pointer-events-none flex items-center justify-center">
+                        <span class="text-green-400 font-bold bg-black/50 px-2 rounded">ÁREA SEGURA</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full text-center p-6 text-gray-500 text-xs border-t border-neutral-800 mt-auto">
+        &copy; 2025 Alocados Digital Team. Herramienta de uso interno.
+    </footer>
+
+    <script>
+        // Inicializar Iconos
+        lucide.createIcons();
+
+        // Lógica de Subida de Imagen
+        const fileInput = document.getElementById('fileInput');
+        const userImage = document.getElementById('userImage');
+        const placeholderMsg = document.getElementById('placeholderMsg');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    userImage.style.backgroundImage = `url(${e.target.result})`;
+                    placeholderMsg.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Lógica de Toggle UI (TikTok Elements)
+        const toggleUI = document.getElementById('toggleUI');
+        const uiLayer = document.getElementById('uiLayer');
+        
+        toggleUI.addEventListener('change', function() {
+            uiLayer.style.opacity = this.checked ? '1' : '0';
+        });
+
+        // Lógica de Toggle Safe Zone
+        const toggleSafeZone = document.getElementById('toggleSafeZone');
+        const phoneFrame = document.getElementById('phoneFrame');
+        
+        toggleSafeZone.addEventListener('change', function() {
+            if (this.checked) {
+                phoneFrame.classList.add('safe-zone-active');
+            } else {
+                phoneFrame.classList.remove('safe-zone-active');
+            }
+        });
+    </script>
+</body>
+</html>
